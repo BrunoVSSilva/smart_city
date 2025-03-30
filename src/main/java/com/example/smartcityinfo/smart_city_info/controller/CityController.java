@@ -41,10 +41,12 @@ public class CityController {
     }
 
     @DeleteMapping("/{code}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCity(@PathVariable int code) {
         if (!cityRepository.existsById(code)) {
             throw new EntityNotFoundException("Cidade com código " + code + " não encontrada");
         }
         cityRepository.deleteById(code);
     }
+
 }
