@@ -1,8 +1,9 @@
 package com.example.smartcityinfo.smart_city_info.controller;
 
-import com.example.smartcityinfo.smart_city_info.domain.exception.GlobalExceptionHandler;
+import com.example.smartcityinfo.smart_city_info.domain.exception.EntityNotFoundException;
 import com.example.smartcityinfo.smart_city_info.domain.model.CityAvaliation;
-import com.example.smartcityinfo.smart_city_info.domain.repository.CityAvaliationRepository;
+import com.example.smartcityinfo.smart_city_info.domain.exception.GlobalExceptionHandler;
+import com.example.smartcityinfo.smart_city_info.service.CityAvaliationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,16 +11,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import java.util.Arrays;
-import java.util.Optional;
+
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class CityAvaliationControllerTest {
 
     @Mock
-    private CityAvaliationRepository cityAvaliationRepository;
+    private CityAvaliationService cityAvaliationService;
 
     @InjectMocks
     private CityAvaliationController cityAvaliationController;
@@ -34,24 +37,19 @@ public class CityAvaliationControllerTest {
                 .build();
     }
 
+    private CityAvaliation createAvaliation(int code, String schoolAvaliation) {
+        CityAvaliation avaliation = new CityAvaliation();
+        avaliation.setCode(code);
+        avaliation.setSchoolAvaliation(schoolAvaliation);
+        return avaliation;
+    }
+
     @Test
-    public void testShowList() throws Exception {
-        // Arrange
-        CityAvaliation avaliation1 = new CityAvaliation();
-        avaliation1.setCode(1);
-        avaliation1.setSchoolAvaliation("Avaliação das escolas ok");
-        avaliation1.setSecurityAvaliation("Avaliação da segurança ok");
-        avaliation1.setHealthAvaliation("Avaliação da saúde ok");
-        avaliation1.setCityId(1);
+    public void shouldGetAllAvaliation() throws Exception {
+        CityAvaliation avaliation1 = createAvaliation(1, "A");
+        CityAvaliation avaliation2 = createAvaliation(2, "B");
 
-        CityAvaliation avaliation2 = new CityAvaliation();
-        avaliation2.setCode(2);
-        avaliation2.setSchoolAvaliation("Avaliação das escolas excelente");
-        avaliation2.setSecurityAvaliation("Avaliação da segurança boa");
-        avaliation2.setHealthAvaliation("Avaliação da saúde ruim");
-        avaliation2.setCityId(2);
-
-        when(cityAvaliationRepository.findAll()).thenReturn(Arrays.asList(avaliation1, avaliation2));
+        when(cityAvaliationService.getAllAvaliation()).thenReturn(Arrays.asList(avaliation1, avaliation2));
 
         mockMvc.perform(get("/avaliacao"))
                 .andExpect(status().isOk())
@@ -60,98 +58,69 @@ public class CityAvaliationControllerTest {
     }
 
     @Test
-    public void testSearch() throws Exception {
-        CityAvaliation avaliation = new CityAvaliation();
-        avaliation.setCode(1);
-        avaliation.setSchoolAvaliation("Avaliação das escolas boas");
-        avaliation.setSecurityAvaliation("Avaliação da segurança boa");
-        avaliation.setHealthAvaliation("Avaliação da saúde excelente");
-        avaliation.setCityId(1);
+    public void shouldGetAvaliation() throws Exception {
+        CityAvaliation avaliation = createAvaliation(1, "A");
 
-        when(cityAvaliationRepository.findById(1)).thenReturn(Optional.of(avaliation));
+        when(cityAvaliationService.getAvaliationByCode(1)).thenReturn(avaliation);
 
         mockMvc.perform(get("/avaliacao/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1))
-                .andExpect(jsonPath("$.schoolAvaliation").value("Avaliação das escolas boas"))
-                .andExpect(jsonPath("$.securityAvaliation").value("Avaliação da segurança boa"))
-                .andExpect(jsonPath("$.healthAvaliation").value("Avaliação da saúde excelente"));
+                .andExpect(jsonPath("$.schoolAvaliation").value("A"));
     }
 
     @Test
-    public void testSearchNotFound() throws Exception {
-        when(cityAvaliationRepository.findById(1)).thenReturn(Optional.empty());
+    public void shouldGetAvaliationNotFound() throws Exception {
+        when(cityAvaliationService.getAvaliationByCode(1)).thenThrow(new EntityNotFoundException("Avaliação não encontrada"));
 
         mockMvc.perform(get("/avaliacao/1"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Avaliação não encontrada"));  // Verifica a mensagem de erro
+                .andExpect(jsonPath("$.message").value("Avaliação não encontrada"));
     }
 
     @Test
-    public void testCreateInvalidData() throws Exception {
-        CityAvaliation invalidAvaliation = new CityAvaliation();
-        invalidAvaliation.setCode(1);
-        invalidAvaliation.setCityId(1);
+    public void shouldCreateAvaliation() throws Exception {
+        CityAvaliation avaliation = createAvaliation(1, "A");
+
+        when(cityAvaliationService.createAvaliation(any(CityAvaliation.class))).thenReturn(avaliation);
 
         mockMvc.perform(post("/avaliacao")
                         .contentType("application/json")
-                        .content("{\"cityId\": 1}"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    public void testCreate() throws Exception {
-        CityAvaliation avaliation = new CityAvaliation();
-        avaliation.setCode(1);
-        avaliation.setSchoolAvaliation("Avaliação das escolas ok");
-        avaliation.setSecurityAvaliation("Avaliação da segurança ok");
-        avaliation.setHealthAvaliation("Avaliação da saúde ok");
-        avaliation.setCityId(1);
-
-        when(cityAvaliationRepository.save(any(CityAvaliation.class))).thenReturn(avaliation);
-
-        mockMvc.perform(post("/avaliacao")
-                        .contentType("application/json")
-                        .content("{\"schoolAvaliation\":\"Avaliação das escolas ok\",\"securityAvaliation\":\"Avaliação da segurança ok\",\"healthAvaliation\":\"Avaliação da saúde ok\",\"cityId\":1}"))
+                        .content("{\"schoolAvaliation\": \"A\", \"securityAvaliation\": \"B\", \"healthAvaliation\": \"C\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value(1))
-                .andExpect(jsonPath("$.schoolAvaliation").value("Avaliação das escolas ok"));
+                .andExpect(jsonPath("$.schoolAvaliation").value("A"));
     }
 
     @Test
-    public void testUpdate() throws Exception {
-        CityAvaliation avaliation = new CityAvaliation();
-        avaliation.setCode(1);
-        avaliation.setSchoolAvaliation("Avaliação atualizada das escolas");
-        avaliation.setSecurityAvaliation("Avaliação da segurança boa");
-        avaliation.setHealthAvaliation("Avaliação da saúde boa");
-        avaliation.setCityId(1);
+    public void shouldUpdateAvaliation() throws Exception {
+        CityAvaliation avaliation = createAvaliation(1, "A");
 
-        when(cityAvaliationRepository.save(any(CityAvaliation.class))).thenReturn(avaliation);
-        when(cityAvaliationRepository.findById(1)).thenReturn(Optional.of(avaliation));
+        when(cityAvaliationService.updateAvaliation(any(CityAvaliation.class), eq(1))).thenReturn(avaliation);
 
         mockMvc.perform(put("/avaliacao/1")
                         .contentType("application/json")
-                        .content("{\"schoolAvaliation\":\"Avaliação atualizada das escolas\",\"securityAvaliation\":\"Avaliação da segurança boa\",\"healthAvaliation\":\"Avaliação da saúde boa\",\"cityId\":1}"))
+                        .content("{\"schoolAvaliation\": \"A\", \"securityAvaliation\": \"B\", \"healthAvaliation\": \"C\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1))
-                .andExpect(jsonPath("$.schoolAvaliation").value("Avaliação atualizada das escolas"));
+                .andExpect(jsonPath("$.schoolAvaliation").value("A"));
     }
 
+
+
     @Test
-    public void testDelete() throws Exception {
-        when(cityAvaliationRepository.existsById(1)).thenReturn(true);
-        doNothing().when(cityAvaliationRepository).deleteById(1);
+    public void shouldDeleteAvaliation() throws Exception {
+        doNothing().when(cityAvaliationService).deleteAvaliation(1);
 
         mockMvc.perform(delete("/avaliacao/1"))
                 .andExpect(status().isNoContent());
 
-        verify(cityAvaliationRepository, times(1)).deleteById(1);
+        verify(cityAvaliationService, times(1)).deleteAvaliation(1);
     }
 
     @Test
-    public void testDeleteNotFound() throws Exception {
-        when(cityAvaliationRepository.existsById(1)).thenReturn(false);
+    public void shouldDeleteAvaliationNotFound() throws Exception {
+        doThrow(new EntityNotFoundException("Avaliação não encontrada")).when(cityAvaliationService).deleteAvaliation(1);
 
         mockMvc.perform(delete("/avaliacao/1"))
                 .andExpect(status().isNotFound())

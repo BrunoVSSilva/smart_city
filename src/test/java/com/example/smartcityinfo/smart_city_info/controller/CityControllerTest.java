@@ -1,8 +1,9 @@
 package com.example.smartcityinfo.smart_city_info.controller;
 
+import com.example.smartcityinfo.smart_city_info.domain.exception.EntityNotFoundException;
 import com.example.smartcityinfo.smart_city_info.domain.exception.GlobalExceptionHandler;
 import com.example.smartcityinfo.smart_city_info.domain.model.City;
-import com.example.smartcityinfo.smart_city_info.domain.repository.CityRepository;
+import com.example.smartcityinfo.smart_city_info.service.CityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -12,7 +13,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class CityControllerTest {
 
     @Mock
-    private CityRepository cityRepository;
+    private CityService cityService;
 
     @InjectMocks
     private CityController cityController;
@@ -45,11 +45,11 @@ public class CityControllerTest {
     }
 
     @Test
-    public void testGetAllCities() throws Exception {
+    public void shouldGetAllCities() throws Exception {
         City city1 = createCity(1, "City 1");
         City city2 = createCity(2, "City 2");
 
-        when(cityRepository.findAll()).thenReturn(Arrays.asList(city1, city2));
+        when(cityService.getAllCities()).thenReturn(Arrays.asList(city1, city2));
 
         mockMvc.perform(get("/cidade"))
                 .andExpect(status().isOk())
@@ -58,10 +58,10 @@ public class CityControllerTest {
     }
 
     @Test
-    public void testGetCity() throws Exception {
+    public void shouldGetCity() throws Exception {
         City city = createCity(1, "City 1");
 
-        when(cityRepository.findById(1)).thenReturn(Optional.of(city));
+        when(cityService.getCityByCode(1)).thenReturn(city);
 
         mockMvc.perform(get("/cidade/1"))
                 .andExpect(status().isOk())
@@ -70,8 +70,8 @@ public class CityControllerTest {
     }
 
     @Test
-    public void testGetCityNotFound() throws Exception {
-        when(cityRepository.findById(1)).thenReturn(Optional.empty());
+    public void shouldGetCityNotFound() throws Exception {
+        when(cityService.getCityByCode(1)).thenThrow(new EntityNotFoundException("Cidade com código 1 não encontrada"));
 
         mockMvc.perform(get("/cidade/1"))
                 .andExpect(status().isNotFound())
@@ -79,11 +79,11 @@ public class CityControllerTest {
     }
 
     @Test
-    public void testCreateCity() throws Exception {
+    public void shouldCreateCity() throws Exception {
         City city = createCity(1, "City 1");
         city.setAbout("Informações sobre City 1");
 
-        when(cityRepository.save(any(City.class))).thenReturn(city);
+        when(cityService.createCity(any(City.class))).thenReturn(city);
 
         mockMvc.perform(post("/cidade")
                         .contentType("application/json")
@@ -94,9 +94,8 @@ public class CityControllerTest {
                 .andExpect(jsonPath("$.about").value("Informações sobre City 1"));
     }
 
-
     @Test
-    public void testCreateCityInvalid() throws Exception {
+    public void shouldVerifyCreateCityInvalid() throws Exception {
         mockMvc.perform(post("/cidade")
                         .contentType("application/json")
                         .content("{\"name\": \"\", \"about\": \"Informações sobre City 1\"}"))
@@ -110,14 +109,12 @@ public class CityControllerTest {
                 .andExpect(jsonPath("$[0]").value("about: Campo 'sobre' obrigatório!"));
     }
 
-
     @Test
-    public void testUpdateCity() throws Exception {
+    public void shouldUpdateCity() throws Exception {
         City city = createCity(1, "Cidade Atualizada");
         city.setAbout("Informações sobre Cidade Atualizada");
 
-        when(cityRepository.save(any(City.class))).thenReturn(city);
-        when(cityRepository.findById(1)).thenReturn(Optional.of(city));
+        when(cityService.updateCity(any(City.class), eq(1))).thenReturn(city);
 
         mockMvc.perform(put("/cidade/1")
                         .contentType("application/json")
@@ -129,22 +126,21 @@ public class CityControllerTest {
     }
 
     @Test
-    public void testDeleteCity() throws Exception {
-        when(cityRepository.existsById(1)).thenReturn(true);
-        doNothing().when(cityRepository).deleteById(1);
+    public void shouldDeleteCity() throws Exception {
+        doNothing().when(cityService).deleteCity(1);
 
         mockMvc.perform(delete("/cidade/1"))
                 .andExpect(status().isNoContent());
 
-        verify(cityRepository, times(1)).deleteById(1);
+        verify(cityService, times(1)).deleteCity(1);
     }
 
     @Test
-    public void testDeleteCityNotFound() throws Exception {
-        when(cityRepository.existsById(1)).thenReturn(false);
+    public void shouldDeleteCityNotFound() throws Exception {
+        doThrow(new EntityNotFoundException("Cidade com código 1 não encontrada")).when(cityService).deleteCity(1);
 
         mockMvc.perform(delete("/cidade/1"))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isNotFound())  // Espera o status 404
                 .andExpect(jsonPath("$.message").value("Cidade com código 1 não encontrada"));
     }
 }

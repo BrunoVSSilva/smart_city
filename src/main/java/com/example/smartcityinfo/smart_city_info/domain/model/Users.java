@@ -1,24 +1,26 @@
 package com.example.smartcityinfo.smart_city_info.domain.model;
 
- import jakarta.persistence.Entity;
- import jakarta.persistence.GeneratedValue;
- import jakarta.persistence.GenerationType;
- import jakarta.persistence.Id;
- import jakarta.validation.constraints.Size;
-
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
+@Table(name = "users")
 public class Users {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int code;
 
+    @NotBlank
     @Size(max = 25)
+    @Column(nullable = false)
     private String name;
 
+    @NotBlank
     @Size(max = 20)
-    private String role;  // Exemplo: "ADMIN" ou "USER"
+    @Column(nullable = false)
+    private String role;
 
     public int getCode() {
         return code;

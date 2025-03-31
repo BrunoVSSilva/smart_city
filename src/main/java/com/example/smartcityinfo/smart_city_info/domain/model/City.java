@@ -13,22 +13,21 @@ public class City {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull(message = "Código obrigatório!") // Adicionando validação para o código
+    @NotNull(message = "Código obrigatório!")
     private int code;
 
-    @NotBlank(message = "Nome obrigatório!") // Valida se o nome não está em branco
-    @Size(max = 50, message = "O nome da cidade não pode ter mais de 50 caracteres.") // Valida o tamanho do nome
+    @NotBlank(message = "Nome obrigatório!")
+    @Size(max = 50, message = "O nome da cidade não pode ter mais de 50 caracteres.")
     private String name;
 
-    @NotBlank(message = "Campo 'sobre' obrigatório!") // Valida se o campo 'about' não está em branco
-    @Size(max = 255, message = "O campo 'sobre' não pode ter mais de 255 caracteres.") // Valida o tamanho do campo 'about'
+    @NotBlank(message = "Campo 'sobre' obrigatório!")
+    @Size(max = 255, message = "O campo 'sobre' não pode ter mais de 255 caracteres.")
     private String about;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "city_id", referencedColumnName = "code")
     private Set<CityAvaliation> avaliations = new HashSet<>();
 
-    // Getters e Setters
     public int getCode() { return code; }
     public void setCode(int code) { this.code = code; }
 

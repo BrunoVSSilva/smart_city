@@ -9,8 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SmartCityInfoApplicationTests {
 
 	@Test
-	void sampleTest() {
-		assertTrue(true);
-	}
+	void contextLoads() {
 
+	}
 }
