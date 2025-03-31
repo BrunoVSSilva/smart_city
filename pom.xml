@@ -104,6 +104,26 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<!-- Configurando limites de cobertura -->
+					<rules>
+						<rule>
+							<element>CLASS</element>
+							<limits>
+								<limit software="true" value="80.0" />
+							</limits>
+						</rule>
+					</rules>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.10.1</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
