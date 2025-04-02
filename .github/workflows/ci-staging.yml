@@ -44,7 +44,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event_name == 'push'  # Evita deploys em PRs
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: staging
 

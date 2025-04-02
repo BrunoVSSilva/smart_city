@@ -1,0 +1,51 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Staging - Local Deployment
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Compilar e Rodar Testes
+        run: mvn clean verify
+
+      - name: Gerar Artefato
+        run: mvn package -DskipTests
+
+      - name: Parar Serviço Anterior
+        run: |
+          PID=$(lsof -t -i:8081) || true
+          if [ -n "$PID" ]; then
+            echo "Parando serviço na porta 8081..."
+            kill -9 $PID
+          fi
+
+      - name: Iniciar Aplicação Staging
+        run: |
+          echo "Iniciando ambiente de Staging..."
+          nohup java -jar target/*.jar --spring.profiles.active=staging > staging.log 2>&1 &
