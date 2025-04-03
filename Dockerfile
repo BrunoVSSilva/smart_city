@@ -1,9 +1,17 @@
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jdk AS build
 
 WORKDIR /app
 
-COPY target/city-project.jar app.jar
+COPY . .
+
+RUN ./mvnw clean package -DskipTests
+
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+COPY --from=build /app/target/smart_city_info-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "app.jar"]
