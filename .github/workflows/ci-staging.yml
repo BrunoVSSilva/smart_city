@@ -53,6 +53,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: smartcity-app
+          path: target
+
+      - name: Verificar arquivos
+        run: ls -lah target/
 
       - name: Deploy para Staging
         env:
@@ -60,5 +64,6 @@ jobs:
           STAGING_USER: ${{ secrets.STAGING_USER }}
           STAGING_KEY: ${{ secrets.STAGING_KEY }}
         run: |
-          echo "Deployando para ambiente de staging..."
-          scp -i $STAGING_KEY *.jar $STAGING_USER@$STAGING_SERVER:/opt/app/staging/
+          echo "$STAGING_KEY" > staging_key.pem
+          chmod 600 staging_key.pem
+          scp -i staging_key.pem target/*.jar $STAGING_USER@$STAGING_SERVER:/opt/app/staging/
