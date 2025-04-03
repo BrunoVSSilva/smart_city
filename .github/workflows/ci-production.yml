@@ -61,4 +61,4 @@ jobs:
           PROD_KEY: ${{ secrets.PROD_KEY }}
         run: |
           echo "Deployando para ambiente de produção..."
-          scp -i $PROD_KEY *.jar $PROD_USER@$PROD_SERVER:/opt/app/production/
+          scp -i $PROD_KEY target/*.jar $PROD_USER@$PROD_SERVER:/opt/app/production/

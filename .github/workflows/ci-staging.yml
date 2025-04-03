@@ -61,4 +61,4 @@ jobs:
           STAGING_KEY: ${{ secrets.STAGING_KEY }}
         run: |
           echo "Deployando para ambiente de staging..."
-          scp -i $STAGING_KEY *.jar $STAGING_USER@$STAGING_SERVER:/opt/app/staging/
+          scp -i $STAGING_KEY target/*.jar $STAGING_USER@$STAGING_SERVER:/opt/app/staging/
