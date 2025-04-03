@@ -45,8 +45,15 @@ jobs:
             kill -9 $PID
           fi
 
+      - name: Build e push Docker Image
+        uses: mr-smithers-excellent/docker-build-push@v4
+        with:
+          image: brunolucky/smart_city_info
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Iniciar Aplicação Produção
         run: |
           echo "Iniciando ambiente de Produção..."
-          nohup java -jar target/*.jar --spring.profiles.active=production > production.log 2>&1 &
 
