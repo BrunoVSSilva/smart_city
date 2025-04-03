@@ -60,5 +60,6 @@ jobs:
           PROD_USER: ${{ secrets.PROD_USER }}
           PROD_KEY: ${{ secrets.PROD_KEY }}
         run: |
-          echo "Deployando para ambiente de produção..."
-          scp -i $PROD_KEY target/*.jar $PROD_USER@$PROD_SERVER:/opt/app/production/
+          echo "$PROD_KEY" > prod_key.pem
+          chmod 600 prod_key.pem
+          scp -i prod_key.pem target/*.jar $PROD_USER@$PROD_SERVER:/opt/app/production/
