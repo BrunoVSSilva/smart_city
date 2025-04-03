@@ -53,6 +53,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: smartcity-app
+          path: target
+
+      - name: Verificar arquivos
+        run: ls -lah target/
 
       - name: Deploy para Staging
         env:

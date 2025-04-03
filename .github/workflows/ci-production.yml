@@ -53,6 +53,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: smartcity-app
+          path: target
 
       - name: Deploy para Produção
         env:
