@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartcity-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/h2:/app/h2data
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/h2data/smartcitydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    restart: unless-stopped
+
+  app-prod:
+    image: smartcity-info:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smartcity-prod
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./data/h2:/app/h2data
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/h2data/smartcitydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    restart: unless-stopped

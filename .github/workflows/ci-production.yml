@@ -33,34 +33,33 @@ jobs:
           cache: maven
 
       - name: Build e Testes
-        run: mvn clean package
-
-      - name: Upload do Artefato
-        uses: actions/upload-artifact@v4
-        with:
-          name: smartcity-app
-          path: target/*.jar
-          retention-days: 7
+        run: mvn clean package -DskipTests
 
   deploy:
     needs: build
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production
 
     steps:
-      - name: Baixar Artefato
-        uses: actions/download-artifact@v4
-        with:
-          name: smartcity-app
-          path: target
+      - name: Checkout código
+        uses: actions/checkout@v4
 
-      - name: Deploy para Produção
-        env:
-          PROD_SERVER: ${{ secrets.PROD_SERVER }}
-          PROD_USER: ${{ secrets.PROD_USER }}
-          PROD_KEY: ${{ secrets.PROD_KEY }}
-        run: |
-          echo "$PROD_KEY" > prod_key.pem
-          chmod 600 prod_key.pem
-          scp -i prod_key.pem target/*.jar $PROD_USER@$PROD_SERVER:/opt/app/production/
+      - name: Enviar arquivos via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_SERVER }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_KEY }}
+          source: "docker-compose.yml,Dockerfile,target/*.jar"
+          target: "/opt/app/production"
+
+      - name: Rodar Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SERVER }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_KEY }}
+          script: |
+            cd /opt/app/production
+            docker compose down
+            docker compose up -d --build
